@@ -14,11 +14,15 @@ services:
       - "5432:5432"
   web:
     build: .
-    command: rails server -b 3000
+    working_dir: /usr/src/ruby
+    command: 
+      - bundle exec rake generate_secret_token
+      - bundle exec rake db:migrate RAILS_ENV="production"
+      - rails server -b 3000 0.0.0.0
     volumes:
       - .:/usr/src/ruby
     ports:
-      - "3000:3000"
+      - "3000"
     depends_on:
       - db
     links:
