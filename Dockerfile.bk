@@ -1,0 +1,42 @@
+FROM alpine 
+
+RUN apk update  
+RUN apk  add  build-essential mysql-client vim curl wget
+
+RUN curl -sL https://deb.nodesource.com/setup_8.x |  bash - \
+    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+    && apk update \
+    && apt add \ git-core curl \ zlib1g-dev \ build-essential \ libssl-dev \ libreadline-dev \ libyaml-dev \ libsqlite3-dev \ sqlite3 \ libxml2-dev \ libxslt1-dev \ libcurl4-openssl-dev \ software-properties-common \ libffi-dev \ nodejs \ yarn 
+
+
+WORKDIR /home
+RUN wget http://ftp.ruby-lang.org/pub/ruby/2.5/ruby-2.5.1.tar.gz \
+    && tar -xzvf ruby-2.5.1.tar.gz \
+    && cd ruby-2.5.1/ \
+    && ./configure
+
+WORKDIR /home/ruby-2.5.1
+RUN make \
+    && make install
+
+RUN gem install bundler 
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - 
+RUN apk update 
+
+#RUN gem install rails 
+
+RUN mkdir -p /usr/src/ruby
+WORKDIR /usr/src/ruby
+COPY . .
+RUN bundle install
+RUN bundle install --without development test 
+RUN bundle install --without development test rmagick
+#RUN service mysql start or service mysql start 
+RUN bundle exec rake generate_secret_token
+RUN  bundle exec rake db:migrate RAILS_ENV="production"
+RUN chown -R root:root files log tmp public/plugin_assets 
+RUN chmod -R 755 files log tmp public/plugin_assets
+
+EXPOSE 3000
+CMD ["rails", "server", "-b", "0.0.0.0"]

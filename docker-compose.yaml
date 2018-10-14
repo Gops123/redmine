@@ -1,0 +1,34 @@
+version: '2'
+services:
+  db:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: root
+      MYSQL_DATABASE: redmine
+      MYSQL_PASSWORD: root
+    volumes:
+       - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+  web:
+    build: .
+    command: bundle exec rake db:migrate RAILS_ENV="production"
+    volumes:
+      - .:/usr/src/ruby
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    links:
+      - db
+    environment:
+      DB_USER: root
+      DB_NAME: redmine
+      DB_PASSWORD: root
+      DB_HOST: db
+      RAILS_ENV: production
+    
+volumes:
+    db_data:
